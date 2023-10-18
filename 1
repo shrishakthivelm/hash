@@ -1,0 +1,306 @@
+#include<iostream>
+#include<vector>
+#include<unordered_map>
+
+using namespace std;
+
+typedef struct Node
+{
+    int data;
+    Node* nxt;
+    Node(int d)
+    {
+        data = d;
+        nxt = NULL;
+    }
+}node;
+
+typedef struct Head
+{
+    int n;
+    node* first;
+    node* last;
+
+    Head()
+    {
+        n = 0;
+        first = last = NULL;
+    }
+}head;
+
+void makeset(int d,vector<head*>&setHeads,unordered_map<int,int>&repTable)
+{
+    node* t = new node(d);
+    head * h = new head();
+    h->n = 1;
+    h->first = h->last = t;
+    setHeads.push_back(h);
+    repTable[d] = d;
+}
+
+int find(int d, unordered_map<int,int>&repTable)
+{
+    return repTable[d];
+}
+
+void changeRep(unordered_map<int,int>&repTable,node*ptr,int rep)
+{
+    while(ptr!=NULL)
+    {
+        repTable[ptr->data] = rep;
+        ptr = ptr->nxt;
+    }
+}
+
+void Union(int a,int b,vector<head*>&setHeads ,unordered_map<int,int>&repTable)
+{
+    int repA = repTable[a];
+    int repB = repTable[b];
+    head* A = NULL;
+    head* B = NULL;
+    int posA,posB;
+    for(int i =0; i<setHeads.size(); i++)
+    {
+        head *ptr  = setHeads[i];
+
+        if(ptr->first->data == repA)
+        {
+            A = ptr;
+            posA =i;
+        }
+        else if(ptr->first->data == repB)
+        {
+            B = ptr;
+            posB = i;
+        }
+    }
+    if(A->n >= B->n)
+    {
+        changeRep(repTable,B->first,A->first->data);
+        A->last->nxt = B->first;
+        A->last = B->last;
+        A->n += B->n;
+        setHeads.erase(setHeads.begin()+posB);
+        delete B;
+    }
+    else
+    {
+        changeRep(repTable,A->first,B->first->data);
+        B->last->nxt = A->first;
+        B->last = A->last;
+        B->n += A->n;
+        setHeads.erase(setHeads.begin()+posA);
+        delete A;
+    }
+}
+
+void display(vector<head*>setHeads)
+{
+    for(head*ptr : setHeads)
+    {
+        cout<<"------"<<endl;
+        cout<<"Set size:"<<ptr->n<<endl;
+        cout<<"Set representative: "<<ptr->first->data<<endl;
+        cout<<"Elements of set: "<<endl;
+        node * p = ptr->first;
+        while(p!=NULL)
+        {
+            cout<<p->data<<endl;
+            p = p->nxt;
+        }
+        cout<<"------"<<endl;
+    }
+}
+
+int main()
+{
+    int choice;
+    vector<head*>setHeads;
+    unordered_map<int,int>repTable;
+    do
+   {
+      cout<<"==============="<<endl;
+      cout<<"MAIN MENU"<<endl;
+      cout<<"1. Make set"<<endl;
+      cout<<"2. Find"<<endl;
+      cout<<"3. Union"<<endl;
+      cout<<"4. Display all sets"<<endl;
+      cout<<"0. Exit"<<endl;
+      cout<<"Enter your choice: ";
+      cin>>choice;
+      cout<<"==============="<<endl;
+      switch(choice)
+      {
+         case 1:
+         {
+            int d;
+            cout<<"Enter the element: ";
+            cin>>d;
+            makeset(d,setHeads,repTable);
+            cout<<"Makeset is successful"<<endl;
+            break;
+         }
+         case 2:
+         {
+            int d;
+            cout<<"Enter the element: ";
+            cin>>d;
+            if(find(d,repTable) != 0)
+               cout<<"Representative element: "<< find(d,repTable) <<endl;
+            else
+               cout<<"Element is not found"<<endl;
+            break;
+         }
+         case 3:
+         {
+            int a,b;
+            cout<<"Enter the first element: ";
+            cin>>a;
+            cout<<"Enter the second element: ";
+            cin>>b;
+            Union(a,b,setHeads,repTable);
+            cout<<"Makeset is successful"<<endl;
+            break;
+         }
+         case 4:
+         {
+            display(setHeads);
+            break;
+         }
+         case 0:
+         {
+            break;
+         }
+         default:
+         {
+            cout<<"Invalid choice"<<endl;
+         }
+      }
+   }
+   while(choice != 0);
+   return 0;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include <stdio.h>
+#include <stdlib.h>
+
+#define slots 3
+#define buckets 10
+
+int counter = 0;
+
+int hashFunction(int data) { return data % buckets; }
+
+void insert(int **hashTable, int data)
+{
+    int hashCode = hashFunction(data);
+
+    int n = 0;
+
+    int flag = 0;
+
+    if (counter == buckets * slots)
+    {
+        return;
+    }
+    for (int i = hashCode;; i = hashCode + (n * n))
+    {
+        for (int j = 0; j < slots; j++)
+        {
+            if (hashTable[i % buckets][j] == -1)
+            {
+                hashTable[i % buckets][j] = data;
+                flag = 1;
+                counter++;
+                break;
+            }
+        }
+        if (flag == 1)
+        {
+            break;
+        }
+        n++;
+    }
+}
+
+int find(int **hashTable, int data)
+{
+    int flag = 0;
+    for (int i = 0; i < buckets; i++)
+    {
+        for (int j = 0; j < slots; j++)
+        {
+            if (hashTable[i][j] == data)
+            {
+                flag = 1;
+                break;
+            }
+        }
+    }
+    return flag;
+}
+
+void Print(int **hashTable)
+{
+    for (int i = 0; i < buckets; i++)
+    {
+        for (int j = 0; j < slots; j++)
+        {
+            printf("%d ", hashTable[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+int main()
+{
+    int **hashTable = (int **)malloc(buckets * sizeof(int *));
+    for (int i = 0; i < buckets; i++)
+    {
+        hashTable[i] = (int *)malloc(slots * sizeof(int));
+    }
+
+    for (int i = 0; i < buckets; i++)
+    {
+        for (int j = 0; j < slots; j++)
+        {
+            hashTable[i][j] = -1;
+        }
+    }
+
+    char ch;
+    do
+    {
+        printf("1. Insert\n2. Find\n3. Print\nq. quit\n");
+        printf("Enter choice: ");
+        scanf("%c", &ch);
+
+        if (ch == '1')
+        {
+            int data;
+            printf("Enter data: ");
+            scanf("%d", &data);
+            insert(hashTable, data);
+        }
+        else if (ch == '2')
+        {
+            int data;
+            printf("Enter data: ");
+            scanf("%d", &data);
+            int flag = find(hashTable, data);
+
+            if (flag == 1)
+            {
+                printf("Found!");
+            }
+            else
+            {
+                printf("Not found\n");
+            }
+        }
+        else if (ch == '3')
+        {
+            Print(hashTable);
+        }
+    } while (ch != 'q');
+}
